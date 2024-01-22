@@ -37,11 +37,11 @@ cv2.createTrackbar('high S','controls',255,255,callback)
 cv2.createTrackbar('low V','controls',0,255,callback)
 cv2.createTrackbar('high V','controls',255,255,callback)
 
-webcam_video = cv2.VideoCapture(1)
-
+#webcam_video = cv2.VideoCapture(1)
+img = cv2.imread('note.jpeg')
 while(1):
 	#read source image
-    success, img = webcam_video.read()
+    #success, img = webcam_video.read()
 	#convert sourece image to HSC color mode
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
