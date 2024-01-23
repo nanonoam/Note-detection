@@ -13,7 +13,8 @@ FIRST_CHILD = 2
 PARENT = 3
 # Define kernels for smuthing and seperating donuts
 smuthing_kernel = np.ones((5,5),np.float32)/25
-erode_kernel = np.array([[1,1,1,1,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,1]], np.uint8)
+# erode_kernel = np.array([[0,1,0],[1,1,1],[0,1,0]], np.uint8)
+erode_kernel = np.ones((5, 5), np.uint8)
 
 def find_largest_contour_and_child(contours, hierarchy):
     
@@ -50,12 +51,12 @@ def detect_note(video):
 
         #blur the imagee to smooth it
         img = cv2.filter2D(img,-1,smuthing_kernel)
-        #add erode
-        img = cv2.erode(img,erode_kernel)
         # Convert image to HSV color space
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         # Create a mask based on the specified HSV color range
         mask = cv2.inRange(hsv, hsv_low, hsv_high)
+        #add morphologyEx
+        mask = cv2.morphologyEx(mask, cv2.MORPH_GRADIENT, erode_kernel)
         # Find contours in the mask
         contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         # Draw all contours on the original image
