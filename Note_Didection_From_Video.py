@@ -11,6 +11,9 @@ NEXT = 0
 PREVIOUS = 1
 FIRST_CHILD = 2
 PARENT = 3
+# Define kernels for smuthing and seperating donuts
+smuthing_kernel = np.ones((5,5),np.float32)/25
+erode_kernel = np.array([[1,1,1,1,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,1]], np.uint8)
 
 def find_largest_contour_and_child(contours, hierarchy):
     
@@ -44,6 +47,11 @@ def detect_note(video):
     while(cap.isOpened()):
         
         ret, img = cap.read()
+
+        #blur the imagee to smooth it
+        img = cv2.filter2D(img,-1,smuthing_kernel)
+        #add erode
+        img = cv2.erode(img,erode_kernel)
         # Convert image to HSV color space
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         # Create a mask based on the specified HSV color range
@@ -80,7 +88,7 @@ def detect_note(video):
                     cv2.rectangle(img, (x, y), (x+w, y+h), (0, 0, 255), 2)
 
                     # Check if the aspect ratios and distance between centers meet the criteria
-                    if (abs(outer_aspect_ratio - inner_aspect_ratio) < 0.2) and (math.dist(outer_center, inner_center) < 10):
+                    if (abs(outer_aspect_ratio - inner_aspect_ratio) < 0.2) and (math.dist(outer_center, inner_center) < 8):
                         image = cv2.putText(img, 'probably donut?☺☻♥', (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2, cv2.LINE_AA)
             else:
                 print("There is no child contour :(")
