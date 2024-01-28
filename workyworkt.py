@@ -97,11 +97,11 @@ def runPipeline(image, llrobot):
                     pix = x1-x
                     dist = calculat_distence(pix, KNOWN_DISTANCE, knownWidth, focalLength)
                     # focalLength = (pix * KNOWN_DISTANCE) / knownWidth
-                    print(dist)
+                    #print(dist)
         else:
             print("There is no child contour :(")
     # except:
     #     print("me no findy findy")
-    llpython = [0,0,0,0,0,0,0,0]
+    llpython = [dist,Angle,0,0,0,0,0,0]
        
     return contours, image, llpython
