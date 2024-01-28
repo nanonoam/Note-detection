@@ -6,6 +6,9 @@ KNOWN_DISTANCE = 100
 knownWidth = 5.08
 focalLength = 452.755905511811
 field_of_view = (63.3,49.7)
+#for trigo
+cam_hight = 60 #in cm
+cam_angle = 60 
 # Define lower and upper bounds for HSV color range
 hsv_low = np.array([0, 95, 119], np.uint8)
 hsv_high = np.array([179, 255, 255], np.uint8)
@@ -40,11 +43,15 @@ def find_largest_contour_and_child(contours, hierarchy):
 
 
 #find x and y angles of note
-def calculat_angle(fov,center ,frame):
-    Angle = (fov[0]/frame.shape[1])*((480/2)-center[0])
-    return Angle
-def calculat_distence(pix, KNOWN_DISTANCE, knownWidth, focalLength):
+def calculat_angle(fov,center ,frame, cam_angle):
+    Angle = (fov[0]/frame.shape[1])*((frame.shape[1]/2)-center[0])
+    Angle_y = (fov[1]/frame.shape[0])*((frame.shape[0]/2)-center[1]) + cam_angle
+    return Angle, Angle_y
+def calculat_distence(pix, knownWidth, focalLength):
     dist = (knownWidth * focalLength) / pix
+    return dist
+def calculat_distence_trigo(Angle_y, cam_hight):
+    dist = cam_hight/np.tan(Angle_y)
     return dist
 
 
@@ -93,15 +100,16 @@ def runPipeline(image, llrobot):
                 # Check if the aspect ratios and distance between centers meet the criteria
                 if (abs(outer_aspect_ratio - inner_aspect_ratio) < 10) and (math.dist(outer_center, inner_center) < 20):
                     image = cv2.putText(image, 'probably donut?☺☻♥', (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2, cv2.LINE_AA)
-                    Angle = calculat_angle(field_of_view, inner_center ,image)
+                    Angle, Angle_y = calculat_angle(field_of_view, inner_center ,image, cam_angle)
                     pix = x1-x
                     dist = calculat_distence(pix, KNOWN_DISTANCE, knownWidth, focalLength)
+                    dist_trigo = calculat_distence_trigo(Angle_y,cam_hight)
                     # focalLength = (pix * KNOWN_DISTANCE) / knownWidth
                     #print(dist)
         else:
             print("There is no child contour :(")
     # except:
     #     print("me no findy findy")
-    llpython = [dist,Angle,0,0,0,0,0,0]
+    llpython = [dist,Angle,dist_trigo,0,0,0,0,0]
        
     return contours, image, llpython
