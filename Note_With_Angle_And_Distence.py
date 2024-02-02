@@ -47,6 +47,7 @@ def calculat_angles(fov, x, y, h, w ,frame):
     return Angles
 def calculat_distence(Angles, hight):
     dist = np.tan(Angles[1])*hight
+    return dist
 # Process video frames
 def detect_note(img):
     #blur the imagee to smooth it

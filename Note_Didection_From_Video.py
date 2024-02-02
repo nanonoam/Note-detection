@@ -99,7 +99,7 @@ def detect_note(video):
         cv2.imshow('img', img)
 
         # Check for key press to exit
-        k = cv2.waitKey(10) & 0xFF
+        k = cv2.waitKey(100) & 0xFF
         if k == 27:
             break
 

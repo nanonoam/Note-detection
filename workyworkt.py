@@ -2,9 +2,6 @@ import cv2
 import numpy as np
 import math
 # global variables go here:
-KNOWN_DISTANCE = 100
-knownWidth = 5.08
-focalLength = 452.755905511811
 field_of_view = (63.3,49.7)
 #for trigo
 cam_hight = 60 #in cm
@@ -14,7 +11,7 @@ hsv_low = np.array([0, 95, 119], np.uint8)
 hsv_high = np.array([179, 255, 255], np.uint8)
 # Define hierarchy indices
 NEXT = 0
-PREVIOUS = 1
+PREVIOUS = 1                
 FIRST_CHILD = 2
 PARENT = 3
 # Define kernels for smuthing and seperating donuts
@@ -47,10 +44,7 @@ def calculat_angle(fov,center ,frame, cam_angle):
     Angle = (fov[0]/frame.shape[1])*((frame.shape[1]/2)-center[0])
     Angle_y = (fov[1]/frame.shape[0])*((frame.shape[0]/2)-center[1]) + cam_angle
     return Angle, Angle_y
-def calculat_distence(pix, knownWidth, focalLength):
-    dist = (knownWidth * focalLength) / pix
-    return dist
-def calculat_distence_trigo(Angle_y, cam_hight):
+def calculat_distence(Angle_y, cam_hight):
     dist = cam_hight/np.tan(Angle_y)
     return dist
 
@@ -68,7 +62,6 @@ def runPipeline(image, llrobot):
     contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     # Draw all contours on the original image
     cv2.drawContours(image, contours, -1, (255, 0, 255), 3)
-    # try:
     # Process only if there are contours detected
     if len(contours) != 0:
         hierarchy = hierarchy[0]
@@ -101,15 +94,11 @@ def runPipeline(image, llrobot):
                 if (abs(outer_aspect_ratio - inner_aspect_ratio) < 10) and (math.dist(outer_center, inner_center) < 20):
                     image = cv2.putText(image, 'probably donut?☺☻♥', (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2, cv2.LINE_AA)
                     Angle, Angle_y = calculat_angle(field_of_view, inner_center ,image, cam_angle)
-                    pix = x1-x
-                    dist = calculat_distence(pix, KNOWN_DISTANCE, knownWidth, focalLength)
-                    dist_trigo = calculat_distence_trigo(Angle_y,cam_hight)
-                    # focalLength = (pix * KNOWN_DISTANCE) / knownWidth
-                    #print(dist)
+                    dist = calculat_distence(Angle_y,cam_hight)
+
         else:
             print("There is no child contour :(")
-    # except:
-    #     print("me no findy findy")
-    llpython = [dist,Angle,dist_trigo,0,0,0,0,0]
+
+    llpython = [dist,Angle,0,0,0,0,0,0]
        
     return contours, image, llpython
