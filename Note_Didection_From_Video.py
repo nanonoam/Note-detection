@@ -18,22 +18,24 @@ erode_kernel = np.ones((5, 5), np.uint8)
 
 def find_largest_contour_and_child(contours, hierarchy):
     
+    real_largest_contour_index = max(range(len(contours)), key=lambda i: cv2.contourArea(contours[i]))
     largest_contour_index = max(range(len(contours)), key=lambda i: cv2.contourArea(contours[i]))
-    child_index = hierarchy[largest_contour_index][FIRST_CHILD]
-    biggest_child_contour_index = -1
-    biggest_child_contour_area = 0
+    for i in range(3):
+        child_index = hierarchy[largest_contour_index][FIRST_CHILD]
+        biggest_child_contour_index = -1
+        biggest_child_contour_area = 0
 
-    while child_index != -1:
-        child_contour = contours[child_index]
-        child_contour_area = cv2.contourArea(child_contour)
+        while child_index != -1:
+            child_contour = contours[child_index]
+            child_contour_area = cv2.contourArea(child_contour)
 
-        if child_contour_area > biggest_child_contour_area:
-            biggest_child_contour_area = child_contour_area
-            biggest_child_contour_index = child_index
+            if child_contour_area > biggest_child_contour_area:
+                biggest_child_contour_area = child_contour_area
+                biggest_child_contour_index = child_index
 
-        child_index = hierarchy[child_index][NEXT]
-    
-    return (largest_contour_index ,biggest_child_contour_index)
+            child_index = hierarchy[child_index][NEXT]
+        largest_contour_index = biggest_child_contour_index
+    return (real_largest_contour_index ,biggest_child_contour_index)
 
 # Process video frames
 def detect_note(video):
@@ -89,17 +91,17 @@ def detect_note(video):
                     cv2.rectangle(img, (x, y), (x+w, y+h), (0, 0, 255), 2)
 
                     # Check if the aspect ratios and distance between centers meet the criteria
-                    if (abs(outer_aspect_ratio - inner_aspect_ratio) < 0.2) and (math.dist(outer_center, inner_center) < 8):
+                    if (abs(outer_aspect_ratio - inner_aspect_ratio) < 1) and (math.dist(outer_center, inner_center) < 20):
                         image = cv2.putText(img, 'probably donut?☺☻♥', (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2, cv2.LINE_AA)
             else:
                 print("There is no child contour :(")
 
-        # Display the mask and the processed image
+        # Display the mask and the processed image     
         cv2.imshow('mask', mask)
         cv2.imshow('img', img)
 
         # Check for key press to exit
-        k = cv2.waitKey(100) & 0xFF
+        k = cv2.waitKey(20) & 0xFF
         if k == 27:
             break
 
