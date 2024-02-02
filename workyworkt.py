@@ -4,8 +4,8 @@ import math
 # global variables go here:
 field_of_view = (63.3,49.7)
 #for trigo
-cam_hight = 60 #in cm
-cam_angle = 60 
+cam_hight = 47.9 #in cm
+cam_angle = 60.5
 # Define lower and upper bounds for HSV color range
 hsv_low = np.array([0, 95, 119], np.uint8)
 hsv_high = np.array([179, 255, 255], np.uint8)
@@ -45,13 +45,14 @@ def calculat_angle(fov,center ,frame, cam_angle):
     Angle_y = (fov[1]/frame.shape[0])*((frame.shape[0]/2)-center[1]) + cam_angle
     return Angle, Angle_y
 def calculat_distence(Angle_y, cam_hight):
-    dist = cam_hight/np.tan(Angle_y)
+    dist = cam_hight*np.tan(np.radians(Angle_y))
     return dist
 
 
 # runPipeline() is called every frame by Limelight's backend.
 def runPipeline(image, llrobot):
-
+    dist = 0
+    Angle = 0
     #blur the imagee to smooth it
     image = cv2.filter2D(image,-1,smuthing_kernel)
     # Convert image to HSV color space
@@ -95,6 +96,7 @@ def runPipeline(image, llrobot):
                     image = cv2.putText(image, 'probably donut?☺☻♥', (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2, cv2.LINE_AA)
                     Angle, Angle_y = calculat_angle(field_of_view, inner_center ,image, cam_angle)
                     dist = calculat_distence(Angle_y,cam_hight)
+                    print(dist)
 
         else:
             print("There is no child contour :(")
