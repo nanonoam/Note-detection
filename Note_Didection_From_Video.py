@@ -92,7 +92,7 @@ def detect_note(video):
 
                     # Check if the aspect ratios and distance between centers meet the criteria
                     if (abs(outer_aspect_ratio - inner_aspect_ratio) < 1) and (math.dist(outer_center, inner_center) < 20):
-                        image = cv2.putText(img, 'probably donut?☺☻♥', (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2, cv2.LINE_AA)
+                        cv2.putText(img, 'probably donut?☺☻♥', (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2, cv2.LINE_AA)
             else:
                 print("There is no child contour :(")
 
