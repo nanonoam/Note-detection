@@ -18,24 +18,22 @@ erode_kernel = np.ones((5, 5), np.uint8)
 
 def find_largest_contour_and_child(contours, hierarchy):
     
-    real_largest_contour_index = max(range(len(contours)), key=lambda i: cv2.contourArea(contours[i]))
     largest_contour_index = max(range(len(contours)), key=lambda i: cv2.contourArea(contours[i]))
-    for i in range(3):
-        child_index = hierarchy[largest_contour_index][FIRST_CHILD]
-        biggest_child_contour_index = -1
-        biggest_child_contour_area = 0
+    
+    child_index = hierarchy[largest_contour_index][FIRST_CHILD]
+    biggest_child_contour_index = -1
+    biggest_child_contour_area = 0
 
-        while child_index != -1:
-            child_contour = contours[child_index]
-            child_contour_area = cv2.contourArea(child_contour)
+    while child_index != -1:
+        child_contour = contours[child_index]
+        child_contour_area = cv2.contourArea(child_contour)
 
-            if child_contour_area > biggest_child_contour_area:
-                biggest_child_contour_area = child_contour_area
-                biggest_child_contour_index = child_index
+        if child_contour_area > biggest_child_contour_area:
+            biggest_child_contour_area = child_contour_area
+            biggest_child_contour_index = child_index
 
-            child_index = hierarchy[child_index][NEXT]
-        largest_contour_index = biggest_child_contour_index
-    return (real_largest_contour_index ,biggest_child_contour_index)
+        child_index = hierarchy[child_index][NEXT]
+    return (largest_contour_index ,biggest_child_contour_index)
 
 # Process video frames
 def detect_note(video):
@@ -57,8 +55,6 @@ def detect_note(video):
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         # Create a mask based on the specified HSV color range
         mask = cv2.inRange(hsv, hsv_low, hsv_high)
-        #add morphologyEx
-        mask = cv2.morphologyEx(mask, cv2.MORPH_GRADIENT, erode_kernel)
         # Find contours in the mask
         contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         # Draw all contours on the original image
@@ -93,6 +89,8 @@ def detect_note(video):
                     # Check if the aspect ratios and distance between centers meet the criteria
                     if (abs(outer_aspect_ratio - inner_aspect_ratio) < 1) and (math.dist(outer_center, inner_center) < 20):
                         cv2.putText(img, 'probably donut?☺☻♥', (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2, cv2.LINE_AA)
+                    else:
+                        cv2.putText(img, 'coected note pls bump to seperate', (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2, cv2.LINE_AA)
             else:
                 print("There is no child contour :(")
 
@@ -101,7 +99,7 @@ def detect_note(video):
         cv2.imshow('img', img)
 
         # Check for key press to exit
-        k = cv2.waitKey(20) & 0xFF
+        k = cv2.waitKey(100) & 0xFF
         if k == 27:
             break
 

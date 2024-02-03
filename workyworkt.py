@@ -22,6 +22,7 @@ erode_kernel = np.ones((5, 5), np.uint8)
 def find_largest_contour_and_child(contours, hierarchy):
     
     largest_contour_index = max(range(len(contours)), key=lambda i: cv2.contourArea(contours[i]))
+    
     child_index = hierarchy[largest_contour_index][FIRST_CHILD]
     biggest_child_contour_index = -1
     biggest_child_contour_area = 0
@@ -35,7 +36,6 @@ def find_largest_contour_and_child(contours, hierarchy):
             biggest_child_contour_index = child_index
 
         child_index = hierarchy[child_index][NEXT]
-    
     return (largest_contour_index ,biggest_child_contour_index)
 
 
@@ -97,6 +97,8 @@ def runPipeline(image, llrobot):
                     Angle, Angle_y = calculat_angle(field_of_view, inner_center ,image, cam_angle)
                     dist = calculat_distence(Angle_y,cam_hight)
                     print(dist)
+                else:
+                    cv2.putText(image, 'coected note pls bump to seperate', (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2, cv2.LINE_AA)
 
         else:
             print("There is no child contour :(")
