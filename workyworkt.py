@@ -6,6 +6,8 @@ field_of_view = (63.3,49.7)
 #for trigo
 cam_hight = 47.9 #in cm
 cam_angle = 60.5
+x_ofset = 50
+y_ofset = 50
 # Define lower and upper bounds for HSV color range
 hsv_low = np.array([0, 95, 119], np.uint8)
 hsv_high = np.array([179, 255, 255], np.uint8)
@@ -18,7 +20,22 @@ PARENT = 3
 smuthing_kernel = np.ones((5,5),np.float32)/25
 # erode_kernel = np.array([[0,1,0],[1,1,1],[0,1,0]], np.uint8)
 erode_kernel = np.ones((5, 5), np.uint8)
-
+def convert_to_mid_of_robot(llpython, x_ofset, y_ofset):
+    Angle = llpython[1]
+    Dist = llpython[0]
+    Mol = Dist * math.tan(Angle)
+    Mol = math.abs(y_ofset - Mol)
+    Dist = Dist + x_ofset
+    Angle = math.atan(Mol/Dist)
+    llpython = [Dist,Angle,0,0,0,0,0,0]
+    return llpython
+def convert_to_x_y_cordinats(llpython):
+    Angle = llpython[1]
+    Dist = llpython[0]
+    x = Dist*math.cos(Angle)
+    y = Dist*math.sin(Angle)
+    llpython = [Dist,Angle,x,y,0,0,0,0]
+    return llpython
 def find_largest_contour_and_child(contours, hierarchy):
     
     largest_contour_index = max(range(len(contours)), key=lambda i: cv2.contourArea(contours[i]))
@@ -104,5 +121,8 @@ def runPipeline(image, llrobot):
             print("There is no child contour :(")
 
     llpython = [dist,Angle,0,0,0,0,0,0]
+    llpython = convert_to_mid_of_robot(llpython, x_ofset, y_ofset)
+    llpython = convert_to_x_y_cordinats(llpython)
+
        
     return contours, image, llpython
