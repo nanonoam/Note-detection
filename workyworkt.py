@@ -125,7 +125,7 @@ def runPipeline(image, llrobot):
 
     llpython = [dist,Angle,0,0,0,0,0,0]
     llpython = convert_to_mid_of_robot(llpython, x_ofset, y_ofset)
-    llpython = convert_to_x_y_cordinats(llpython)
+    llpython = convert_to_x_y_coordinates(llpython)
 
        
     return contours, image, llpython
