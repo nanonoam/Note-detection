@@ -70,16 +70,7 @@ def convert_to_mid_of_robot(llpython: list, x_offset: int, y_offset: int):
     mol = abs(y_offset - mol)
     distance += x_offset
     angle_rad = math.atan2(mol, distance)
-    llpython = [distance, math.degrees(angle_rad)] + [0,  0,  0,  0,  0,  0]
-    return llpython
-
-def convert_to_x_y_coordinates(llpython): #THERE IS AN ERROR IN THE USE OF THIS FUCNTION - WROTE YOU IN WHATSAPP
-    distance = llpython[0]
-    angle = llpython[1]
-    angle_rad = math.radians(angle)
-    x = distance * math.cos(angle_rad)
-    y = distance * math.sin(angle_rad)
-    llpython = [distance, angle] + [x, y] + [0,  0,  0,  0]
+    llpython = [distance, math.degrees(angle_rad)] + [distance, mol] + [0,  0,  0,  0]
     return llpython
 
 def find_largest_contour_and_child(contours: list[np.ndarray], hierarchy: list[np.ndarray]):
@@ -169,7 +160,6 @@ def runPipeline(image, llrobot):
 
     llpython = [dist,Angle,0,0,0,0,0,0]
     llpython = convert_to_mid_of_robot(llpython, X_OFFSET, Y_OFFSET)
-    llpython = convert_to_x_y_coordinates(llpython)
 
        
     return contours, image, llpython
