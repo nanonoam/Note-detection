@@ -1,45 +1,97 @@
 import cv2
 import numpy as np
 import math
-# global variables go here:
-field_of_view = (63.3,49.7)
+# global variables go here: 
+FIELD_OF_VIEW = (63.3,49.7) # (x degrees, y degrees)
 #for trigo
-cam_hight = 47.9 #in cm
-cam_angle = 60.5
-x_ofset = 50
-y_ofset = 50
+CAM_HEIGHT = 47.9 #in cm
+CAM_ANGLE = 60.5 #in degrees
+X_OFFSET = 50 #in cm
+Y_OFFSET = 50 #in cm
 # Define lower and upper bounds for HSV color range
-hsv_low = np.array([0, 95, 119], np.uint8)
-hsv_high = np.array([179, 255, 255], np.uint8)
+HSV_LOW_BOUND = np.array([0, 95, 119], np.uint8)
+HSV_HIGH_BOUND = np.array([179, 255, 255], np.uint8)
 # Define hierarchy indices
 NEXT = 0
 PREVIOUS = 1                
 FIRST_CHILD = 2
 PARENT = 3
 # Define kernels for smuthing and seperating donuts
-smuthing_kernel = np.ones((5,5),np.float32)/25
+SMOOTHING_KERNEL = np.ones((5,5),np.float32)/25
 # erode_kernel = np.array([[0,1,0],[1,1,1],[0,1,0]], np.uint8)
-erode_kernel = np.ones((5, 5), np.uint8)
-def convert_to_mid_of_robot(llpython, x_offset, y_offset):
+ERODE_KERNEL = np.ones((5, 5), np.uint8)
+
+#find x and y angles of note
+def calculate_angle(fov: tuple[float, float], center: tuple[int, int], frame: np.ndarray, camera_pitch_angle: float):
+    """Calculate the relative angle from the camera to the note in both axes
+    -
+    
+    Args:
+        - `fov (tuple[float, float]):` The field of view of the camera (angle_x, angle_y).
+        - `center (tuple[int, int]):` the coordinates of the center of the note in the frame (x, y).
+        - `frame (np.ndarray):` the frame which the note is in.
+        - `camera_pitch_angle (float):` the pitch angle relative to the face of the camera.
+
+    Returns:
+        - `(angle_x, angle_y)`: the angles in both axes from the camera to the note
+    """
+    angle_x = (fov[0] / frame.shape[1]) * ((frame.shape[1] / 2) - center[0])
+    angle_y = (fov[1] / frame.shape[0]) * ((frame.shape[0] / 2) - center[1]) + camera_pitch_angle
+    return angle_x, angle_y
+
+def calculate_distance(angle_y: float, cam_height: float):
+    """Calculates the distance from the camera to the note in the X axis
+    -
+    Args:
+        - `angle_y (float):` the y axis angle from the note to the camera
+        - `cam_height (float):` the height of the camera relative to the ground 
+
+    Returns:
+        `The distance in the X axis from the camera to the note.`
+    """ 
+    return cam_height*np.tan(np.radians(angle_y))
+
+def convert_to_mid_of_robot(llpython: list, x_offset: int, y_offset: int):
+    """Convert the distance and angle from the camera into the distance from the robot.
+
+    Args:
+        llpython (list): the output limelight array
+        x_offset (int): the offset of the camera from the center of the robot
+        y_offset (int): the offset of the camera from the center of the robot
+
+    Returns:
+        `llpython`: The output array for the limelight 
+    """
+    
     distance = llpython[0]
     angle = llpython[1]
-    angle_rad = math.radians(angle) if isinstance(angle, (int, float)) else angle
+    angle_rad = math.radians(angle)
     mol = distance * math.tan(angle_rad)
     mol = abs(y_offset - mol)
     distance += x_offset
     angle_rad = math.atan2(mol, distance)
     llpython = [distance, math.degrees(angle_rad)] + [0,  0,  0,  0,  0,  0]
     return llpython
-def convert_to_x_y_coordinates(llpython):
+
+def convert_to_x_y_coordinates(llpython): #THERE IS AN ERROR IN THE USE OF THIS FUCNTION - WROTE YOU IN WHATSAPP
     distance = llpython[0]
     angle = llpython[1]
-    angle_rad = math.radians(angle) if isinstance(angle, (int, float)) else angle
+    angle_rad = math.radians(angle)
     x = distance * math.cos(angle_rad)
     y = distance * math.sin(angle_rad)
     llpython = [distance, angle] + [x, y] + [0,  0,  0,  0]
     return llpython
 
-def find_largest_contour_and_child(contours, hierarchy):
+def find_largest_contour_and_child(contours: list[np.ndarray], hierarchy: list[np.ndarray]):
+    """Find the largest contour index and his child index
+
+    Args:
+        contours (list[np.ndarray]): The countours list 
+        hierarchy (list[np.ndarray]): The respective heirarchy list
+
+    Returns:
+        (int, int): the indexes of the largest contour and his child
+    """
     
     largest_contour_index = max(range(len(contours)), key=lambda i: cv2.contourArea(contours[i]))
     
@@ -59,14 +111,6 @@ def find_largest_contour_and_child(contours, hierarchy):
     return (largest_contour_index ,biggest_child_contour_index)
 
 
-#find x and y angles of note
-def calculat_angle(fov,center ,frame, cam_angle):
-    Angle = (fov[0]/frame.shape[1])*((frame.shape[1]/2)-center[0])
-    Angle_y = (fov[1]/frame.shape[0])*((frame.shape[0]/2)-center[1]) + cam_angle
-    return Angle, Angle_y
-def calculat_distence(Angle_y, cam_hight):
-    dist = cam_hight*np.tan(np.radians(Angle_y))
-    return dist
 
 
 # runPipeline() is called every frame by Limelight's backend.
@@ -74,11 +118,11 @@ def runPipeline(image, llrobot):
     dist = 0
     Angle = 0
     #blur the imagee to smooth it
-    image = cv2.filter2D(image,-1,smuthing_kernel)
+    image = cv2.filter2D(image,-1,SMOOTHING_KERNEL)
     # Convert image to HSV color space
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
     # Create a mask based on the specified HSV color range
-    mask = cv2.inRange(hsv, hsv_low, hsv_high)
+    mask = cv2.inRange(hsv, HSV_LOW_BOUND, HSV_HIGH_BOUND)
     # Find contours in the mask
     contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     # Draw all contours on the original image
@@ -114,8 +158,8 @@ def runPipeline(image, llrobot):
                 # Check if the aspect ratios and distance between centers meet the criteria
                 if (abs(outer_aspect_ratio - inner_aspect_ratio) < 10) and (math.dist(outer_center, inner_center) < 20):
                     image = cv2.putText(image, 'probably donut?☺☻♥', (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2, cv2.LINE_AA)
-                    Angle, Angle_y = calculat_angle(field_of_view, inner_center ,image, cam_angle)
-                    dist = calculat_distence(Angle_y,cam_hight)
+                    Angle, Angle_y = calculate_angle(FIELD_OF_VIEW, inner_center ,image, CAM_ANGLE)
+                    dist = calculate_distance(Angle_y,CAM_HEIGHT)
                     print(dist)
                 else:
                     cv2.putText(image, 'coected note pls bump to seperate', (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2, cv2.LINE_AA)
@@ -124,7 +168,7 @@ def runPipeline(image, llrobot):
             print("There is no child contour :(")
 
     llpython = [dist,Angle,0,0,0,0,0,0]
-    llpython = convert_to_mid_of_robot(llpython, x_ofset, y_ofset)
+    llpython = convert_to_mid_of_robot(llpython, X_OFFSET, Y_OFFSET)
     llpython = convert_to_x_y_coordinates(llpython)
 
        
