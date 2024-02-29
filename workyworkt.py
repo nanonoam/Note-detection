@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 import math
+from typing import List, Tuple
+
 # global variables go here: 
 FIELD_OF_VIEW = (63.3,49.7) # (x degrees, y degrees)
 #for trigo
@@ -22,7 +24,8 @@ SMOOTHING_KERNEL = np.ones((5,5),np.float32)/25
 ERODE_KERNEL = np.ones((5, 5), np.uint8)
 
 #find x and y angles of note
-def calculate_angle(fov: tuple[float, float], center: tuple[int, int], frame: np.ndarray, camera_pitch_angle: float):
+
+def calculate_angle(fov: Tuple[float, float], center: Tuple[int, int], frame: np.ndarray, camera_pitch_angle: float):
     """Calculate the relative angle from the camera to the note in both axes
     -
     
@@ -73,7 +76,8 @@ def convert_to_mid_of_robot(llpython: list, x_offset: int, y_offset: int):
     llpython = [distance, math.degrees(angle_rad)] + [distance, mol] + [0,  0,  0,  0]
     return llpython
 
-def find_largest_contour_and_child(contours: list[np.ndarray], hierarchy: list[np.ndarray]):
+
+def find_largest_contour_and_child(contours: List[np.ndarray], hierarchy: List[np.ndarray]) -> Tuple[int, int]:
     """Find the largest contour index and his child index
 
     Args:
