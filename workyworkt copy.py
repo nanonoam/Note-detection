@@ -23,13 +23,13 @@ SMOOTHING_KERNEL = np.ones((5,5),np.float32)/25
 # erode_kernel = np.array([[0,1,0],[1,1,1],[0,1,0]], np.uint8)
 ERODE_KERNEL = np.ones((5, 5), np.uint8)
 
-MARKER1_POS = (10, 10)
-MARKER2_POS = (20, 150)  
-MARKER3_POS = (300, 20)
+MARKER1_POS = (59, 164)
+MARKER2_POS = (73, 165)  
+MARKER3_POS = (69, 178)
 
 # Reference marker expected HSV values
-MARKER1_COLOR = (255, 0, 0) # #ff0000 Bright Red
-MARKER2_COLOR = (255, 255, 25) # #ffff19 Vivid Yellow
+MARKER1_COLOR = (0, 0, 255) # #ff0000 Bright Red
+MARKER2_COLOR = (25, 255, 255) # #ffff19 Vivid Yellow
 MARKER3_COLOR = (50, 205, 50) # #32cd32 Bright green
 
 # Convert from BGR to HSV
@@ -42,6 +42,7 @@ MARKER3_HSV = cv2.cvtColor(np.uint8([[MARKER3_COLOR]]), cv2.COLOR_BGR2HSV)[0][0]
 H_THRESH = 10  
 S_THRESH = 30
 V_THRESH = 30
+
 
 #find x and y angles of note
 
@@ -151,10 +152,13 @@ def adjust_hsv(frame):
 
 
 # runPipeline() is called every frame by Limelight's backend.
-def runPipeline(image, llrobot):
+def detect_note(image):
 
     adjust_hsv(image)
 
+    cv2.circle(image, MARKER1_POS, 5, MARKER1_COLOR,-1)
+    cv2.circle(image, MARKER2_POS, 5, MARKER2_COLOR,-1)
+    cv2.circle(image, MARKER3_POS, 5, MARKER3_COLOR,-1)
     dist = 0
     Angle = 0
     #blur the imagee to smooth it
@@ -200,15 +204,30 @@ def runPipeline(image, llrobot):
                     image = cv2.putText(image, 'probably donut?☺☻♥', (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2, cv2.LINE_AA)
                     Angle, Angle_y = calculate_angle(FIELD_OF_VIEW, inner_center ,image, CAM_ANGLE)
                     dist = calculate_distance(Angle_y,CAM_HEIGHT)
-                    print(dist)
                 else:
                     cv2.putText(image, 'coected note pls bump to seperate', (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2, cv2.LINE_AA)
 
         else:
             print("There is no child contour :(")
-
+    cv2.imshow("image",image)
     llpython = [dist,Angle,0,0,0,0,0,0]
     llpython = convert_to_mid_of_robot(llpython, X_OFFSET, Y_OFFSET)
 
        
     return contours, image, llpython
+
+cap = cv2.VideoCapture(1)
+
+while(1):
+    
+    ret, img = cap.read()
+
+    detect_note(img)
+
+    # Check for key press to exit
+    k = cv2.waitKey(1) & 0xFF
+    if k == 27:
+        break
+
+# Release the video capture and destroy all windows
+cv2.destroyAllWindows()
