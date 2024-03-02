@@ -10,9 +10,9 @@ CAM_HEIGHT = 47.9 #in cm
 CAM_ANGLE = 60.5 #in degrees
 X_OFFSET = 50 #in cm
 Y_OFFSET = 50 #in cm
-# Define lower and upper bounds for HSV color range
-HSV_LOW_BOUND = np.array([0, 95, 119], np.uint8)
-HSV_HIGH_BOUND = np.array([179, 255, 255], np.uint8)
+# Define lower and upper bounds for HLS color range
+HLS_LOW_BOUND = np.array([0, 95, 119], np.uint8)
+HLS_HIGH_BOUND = np.array([179, 255, 255], np.uint8)
 # Define hierarchy indices
 NEXT = 0
 PREVIOUS = 1                
@@ -27,21 +27,10 @@ MARKER1_POS = (59, 164)
 MARKER2_POS = (73, 165)  
 MARKER3_POS = (69, 178)
 
-# Reference marker expected HSV values
+# Reference marker expected HLS values
 MARKER1_COLOR = (0, 0, 255) # #ff0000 Bright Red
 MARKER2_COLOR = (25, 255, 255) # #ffff19 Vivid Yellow
 MARKER3_COLOR = (50, 205, 50) # #32cd32 Bright green
-
-# Convert from BGR to HSV
-MARKER1_HSV = cv2.cvtColor(np.uint8([[MARKER1_COLOR]]), cv2.COLOR_BGR2HSV)[0][0]
-MARKER2_HSV = cv2.cvtColor(np.uint8([[MARKER2_COLOR]]), cv2.COLOR_BGR2HSV)[0][0] 
-MARKER3_HSV = cv2.cvtColor(np.uint8([[MARKER3_COLOR]]), cv2.COLOR_BGR2HSV)[0][0]
-
-
-# Threshold offsets 
-H_THRESH = 10  
-S_THRESH = 30
-V_THRESH = 30
 
 
 #find x and y angles of note
@@ -126,51 +115,58 @@ def find_largest_contour_and_child(contours: List[np.ndarray], hierarchy: List[n
         child_index = hierarchy[child_index][NEXT]
     return (largest_contour_index ,biggest_child_contour_index)
 
-def avg_hsv(frame, pos):
+def avg_hls(frame, pos):
     x, y = pos
     roi = frame[y-5:y+5, x-5:x+5]
-    return np.mean(cv2.cvtColor(roi, cv2.COLOR_BGR2HSV), axis=(0,1))
+    return np.mean(cv2.cvtColor(roi, cv2.COLOR_BGR2HLS), axis=(0,1))
 
 
-def adjust_hsv(frame):
+def adjust_lightness_range(hls_image, marker_lightness):
+    """
+    Adjust the lightness range based on detected marker lightness values.
 
-    # Get average HSV around each marker 
-    m1_hsv = avg_hsv(frame, MARKER1_POS) 
-    m2_hsv = avg_hsv(frame, MARKER2_POS)
-    m3_hsv = avg_hsv(frame, MARKER3_POS)
+    Args:
+        hls_image (np.ndarray): The HSL image.
+        marker_lightness (list): List of lightness values of detected markers.
 
-    # Update note HSV bounds
-    HSV_LOW_BOUND[0] = np.max((m1_hsv[0] - H_THRESH, m2_hsv[0] - H_THRESH, m3_hsv[0] - H_THRESH)) 
-    HSV_HIGH_BOUND[0] = np.min((m1_hsv[0] + H_THRESH, m2_hsv[0] + H_THRESH, m3_hsv[0] + H_THRESH))
-
-    HSV_LOW_BOUND[1] = np.max((m1_hsv[1] - S_THRESH, m2_hsv[1] - S_THRESH, m3_hsv[1] - S_THRESH)) 
-    HSV_HIGH_BOUND[1] = np.min((m1_hsv[1] + S_THRESH, m2_hsv[1] + S_THRESH, m3_hsv[1] + S_THRESH))
-
-    HSV_LOW_BOUND[2] = np.max((m1_hsv[2] - V_THRESH, m2_hsv[2] - V_THRESH, m3_hsv[2] - V_THRESH))
-    HSV_HIGH_BOUND[2] = np.min((m1_hsv[2] + V_THRESH, m2_hsv[2] + V_THRESH, m3_hsv[2] + V_THRESH))
-
-
+    Returns:
+        np.ndarray: A mask with the adjusted lightness range.
+    """
+    # Define fixed hue range for orange note color
+    hue_range = (10, 40)
+    # Define fixed saturation range for orange note color
+    saturation_range = (200, 255)
+    
+    # Update lightness range based on detected marker lightness
+    lightness_range = (min(marker_lightness) - 20, max(marker_lightness) + 20)
+    
+    # Create a mask based on the specified HSL color range
+    mask = cv2.inRange(hls_image, np.array([hue_range[0], saturation_range[0], lightness_range[0]]), np.array([hue_range[1], saturation_range[1], lightness_range[1]]))
+    
+    return mask
 
 # runPipeline() is called every frame by Limelight's backend.
 def detect_note(image):
-
-    adjust_hsv(image)
-
-    cv2.circle(image, MARKER1_POS, 5, MARKER1_COLOR,-1)
-    cv2.circle(image, MARKER2_POS, 5, MARKER2_COLOR,-1)
-    cv2.circle(image, MARKER3_POS, 5, MARKER3_COLOR,-1)
-    dist = 0
-    Angle = 0
-    #blur the imagee to smooth it
-    image = cv2.filter2D(image,-1,SMOOTHING_KERNEL)
-    # Convert image to HSV color space
-    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-    # Create a mask based on the specified HSV color range
-    mask = cv2.inRange(hsv, HSV_LOW_BOUND, HSV_HIGH_BOUND)
+    # Convert image to HSL color space
+    hls = cv2.cvtColor(image, cv2.COLOR_BGR2HLS)
+    
+    # Detect reference markers and determine their lightness values
+    marker_lightness = []
+    for pos in [MARKER1_POS, MARKER2_POS, MARKER3_POS]:
+        marker_lightness.append(avg_hls(image, pos)[2])
+    
+    # Adjust the lightness range based on detected marker lightness values
+    mask = adjust_lightness_range(hls, marker_lightness)
+    
+    # Display the mask to evaluate how well only the notes are separated
+    cv2.imshow("Mask", mask)
+    
     # Find contours in the mask
     contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    
     # Draw all contours on the original image
     cv2.drawContours(image, contours, -1, (255, 0, 255), 3)
+    
     # Process only if there are contours detected
     if len(contours) != 0:
         hierarchy = hierarchy[0]
@@ -210,13 +206,12 @@ def detect_note(image):
         else:
             print("There is no child contour :(")
     cv2.imshow("image",image)
-    llpython = [dist,Angle,0,0,0,0,0,0]
-    llpython = convert_to_mid_of_robot(llpython, X_OFFSET, Y_OFFSET)
+    llpython = [0,0,0,0,0,0,0,0]
 
        
     return contours, image, llpython
 
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(0)
 
 while(1):
     
