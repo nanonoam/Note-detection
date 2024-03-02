@@ -7,7 +7,8 @@ from typing import List, Tuple
 FIELD_OF_VIEW = (63.3,49.7) # (x degrees, y degrees)
 #for trigo
 CAM_HEIGHT = 61.5 #in cm
-CAM_ANGLE = 48 #in degrees
+CAM_PITCH_ANGLE = 48 #in degrees
+CAM_YAW_ANGLE=24
 X_OFFSET = 30 #in cm
 Y_OFFSET = 31.3 #in cm
 # Define lower and upper bounds for HSV color range
@@ -25,7 +26,7 @@ ERODE_KERNEL = np.ones((7, 7), np.uint8)
 
 #find x and y angles of note
 
-def calculate_angle(fov: Tuple[float, float], center: Tuple[int, int], frame: np.ndarray, camera_pitch_angle: float):
+def calculate_angle(fov: Tuple[float, float], center: Tuple[int, int], frame: np.ndarray, camera_pitch_angle: float, cam_yaw):
     """Calculate the relative angle from the camera to the note in both axes
     -
     
@@ -38,7 +39,7 @@ def calculate_angle(fov: Tuple[float, float], center: Tuple[int, int], frame: np
     Returns:
         - `(angle_x, angle_y)`: the angles in both axes from the camera to the note
     """
-    angle_x = (fov[0] / frame.shape[1]) * ((frame.shape[1] / 2) - center[0]) - 10
+    angle_x = (fov[0] / frame.shape[1]) * ((frame.shape[1] / 2) - center[0]) - cam_yaw       
 
     angle_y = (fov[1] / frame.shape[0]) * ((frame.shape[0] / 2) - center[1]) + camera_pitch_angle
     return angle_x, angle_y
@@ -156,7 +157,7 @@ def runPipeline(image, llrobot):
                 # Check if the aspect ratios and distance between centers meet the criteria
                 if (abs(outer_aspect_ratio - inner_aspect_ratio) < 10) and (math.dist(outer_center, inner_center) < 20):
                     image = cv2.putText(image, 'probably donut?☺☻♥', (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 255), 2, cv2.LINE_AA)
-                    Angle, Angle_y = calculate_angle(FIELD_OF_VIEW, inner_center ,image, CAM_ANGLE)
+                    Angle, Angle_y = calculate_angle(FIELD_OF_VIEW, inner_center ,image, CAM_PITCH_ANGLE, CAM_YAW_ANGLE)
                     dist = calculate_distance(Angle_y,CAM_HEIGHT)
                     
                 else:
@@ -168,5 +169,6 @@ def runPipeline(image, llrobot):
     llpython = [dist,Angle]
     if (llpython[0] > 0):
         llpython = convert_to_mid_of_robot(llpython, X_OFFSET, Y_OFFSET)
+
        
     return contours, image, llpython
