@@ -1,72 +1,70 @@
-#import opencv and numpy
-import cv2  
+import cv2
 import numpy as np
 
-#trackbar callback fucntion to update HSV value
+# Trackbar callback function to update HLS value
 def callback(x):
-	global H_low,H_high,S_low,S_high,V_low,V_high
-	#assign trackbar position value to H,S,V High and low variable
-	H_low = cv2.getTrackbarPos('low H','controls')
-	H_high = cv2.getTrackbarPos('high H','controls')
-	S_low = cv2.getTrackbarPos('low S','controls')
-	S_high = cv2.getTrackbarPos('high S','controls')
-	V_low = cv2.getTrackbarPos('low V','controls')
-	V_high = cv2.getTrackbarPos('high V','controls')
+    global H_low, H_high, L_low, L_high, S_low, S_high
+    # Assign trackbar position value to H, L, S High and low variable
+    H_low = cv2.getTrackbarPos('low H', 'controls')
+    H_high = cv2.getTrackbarPos('high H', 'controls')
+    L_low = cv2.getTrackbarPos('low L', 'controls')
+    L_high = cv2.getTrackbarPos('high L', 'controls')
+    S_low = cv2.getTrackbarPos('low S', 'controls')
+    S_high = cv2.getTrackbarPos('high S', 'controls')
 
+# Create a separate window named 'controls' for trackbar
+cv2.namedWindow('controls', 2)
+cv2.resizeWindow("controls", 550, 10)
 
-#create a seperate window named 'controls' for trackbar
-cv2.namedWindow('controls',2)
-cv2.resizeWindow("controls", 550,10)
-
-
-#global variable
+# Global variable
 H_low = 0
 H_high = 179
-S_low= 0
+L_low = 0
+L_high = 255
+S_low = 0
 S_high = 255
-V_low= 0
-V_high = 255
 
-#create trackbars for high,low H,S,V 
-cv2.createTrackbar('low H','controls',0,179,callback)
-cv2.createTrackbar('high H','controls',179,179,callback)
+# Create trackbars for high, low H, L, S
+cv2.createTrackbar('low H', 'controls', 0, 179, callback)
+cv2.createTrackbar('high H', 'controls', 179, 179, callback)
 
-cv2.createTrackbar('low S','controls',0,255,callback)
-cv2.createTrackbar('high S','controls',255,255,callback)
+cv2.createTrackbar('low L', 'controls', 0, 255, callback)
+cv2.createTrackbar('high L', 'controls', 255, 255, callback)
 
-cv2.createTrackbar('low V','controls',0,255,callback)
-cv2.createTrackbar('high V','controls',255,255,callback)
+cv2.createTrackbar('low S', 'controls', 0, 255, callback)
+cv2.createTrackbar('high S', 'controls', 255, 255, callback)
 
-#webcam_video = cv2.VideoCapture(1)
-img = cv2.imread('1.jpg')
-while(1):
-	#read source image
-    #success, img = webcam_video.read()
-	#convert sourece image to HSC color mode
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+# Initialize webcam video capture
+webcam_video = cv2.VideoCapture(0)
 
-	#
-    hsv_low = np.array([H_low, S_low, V_low], np.uint8)
-    hsv_high = np.array([H_high, S_high, V_high], np.uint8)
+while True:
+    # Read source image from webcam
+    success, img = webcam_video.read()
+    if not success:
+        print("Failed to capture image from webcam.")
+        break
 
-	#making mask for hsv range
-    mask = cv2.inRange(hsv, hsv_low, hsv_high)
-	#masking HSV value selected color becomes black
+    # Convert source image to HLS color mode
+    hls = cv2.cvtColor(img, cv2.COLOR_BGR2HLS)
+
+    hls_low = np.array([H_low, L_low, S_low], np.uint8)
+    hls_high = np.array([H_high, L_high, S_high], np.uint8)
+
+    # Making mask for hls range
+    mask = cv2.inRange(hls, hls_low, hls_high)
+    # Masking HLS value selected color becomes black
     res = cv2.bitwise_and(img, img, mask=mask)
 
+    # Show image
+    cv2.imshow('mask', mask)
+    cv2.imshow('res', res)
+    cv2.imshow('hls', hls)
 
-
-
-	#show image
-    cv2.imshow('mask',mask)
-    cv2.imshow('res',res)
-    cv2.imshow('hsv',hsv)
-
-	
-	#waitfor the user to press escape and break the while loop 
+    # Wait for the user to press escape and break the while loop
     k = cv2.waitKey(1) & 0xFF
     if k == 27:
         break
-		
-#destroys all window
+
+# Release the webcam and destroy all windows
+webcam_video.release()
 cv2.destroyAllWindows()
