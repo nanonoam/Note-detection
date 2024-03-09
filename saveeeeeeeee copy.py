@@ -114,8 +114,6 @@ def find_largest_contour_and_child(contours: List[np.ndarray], hierarchy: List[n
         child_index = hierarchy[child_index][NEXT]
     return (largest_contour_index ,biggest_child_contour_index)
 
-import cv2
-import numpy as np
 
 def get_exposure_increase(image, ref_pos, ref_color):
 
@@ -158,10 +156,12 @@ def get_exposure_increase(image, ref_pos, ref_color):
 # runPipeline() is called every frame by Limelight's backend.
 def runPipeline(image, llrobot):
 
-    print(get_exposure_increase(image, MARKER1_POS, MARKER1_COLOR))
-    print(get_exposure_increase(image, MARKER2_POS, MARKER2_COLOR))
+
+    exposure_increase = (get_exposure_increase(image, MARKER1_POS, MARKER1_COLOR) + get_exposure_increase(image, MARKER2_POS, MARKER2_COLOR))/2
+    
     dist = 0
     Angle = 0
+    
     #blur the imagee to smooth it
     image = cv2.filter2D(image,-1,SMOOTHING_KERNEL)
     # Convert image to HSV color space
@@ -215,7 +215,7 @@ def runPipeline(image, llrobot):
         else:
             print("There is no child contour :(")
 
-    llpython = [dist,Angle]
+    llpython = [dist,Angle, exposure_increase]
     if (llpython[0] > 0):
         llpython = convert_to_mid_of_robot(llpython, X_OFFSET, Y_OFFSET)
 
@@ -223,6 +223,8 @@ def runPipeline(image, llrobot):
     cv2.circle(image, MARKER2_POS, 5, MARKER2_COLOR,-1)
 
     cv2.imshow("image",image)
+
+    print(llpython)
 
     return contours, image, llpython
 
