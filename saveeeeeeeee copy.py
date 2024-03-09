@@ -24,14 +24,13 @@ SMOOTHING_KERNEL = np.ones((5,5),np.float32)/25
 # ERODE_KERNEL = np.array([[0,1,0],[1,1,1],[0,1,0]], np.uint8)
 ERODE_KERNEL = np.ones((7, 7), np.uint8)
 
-MARKER1_POS = (58, 176)
+MARKER1_POS = (69, 190)
 MARKER2_POS = (73, 178)  
-MARKER3_POS = (69, 190)
 
 # Reference marker expected HLS values
-MARKER1_COLOR = (0, 0, 255) # #ff0000 Bright Red
+MARKER1_COLOR = (50, 205, 50) # #32cd32 Bright green
 MARKER2_COLOR = (25, 255, 255) # #ffff19 Vivid Yellow
-MARKER3_COLOR = (50, 205, 50) # #32cd32 Bright green
+
 
 #find x and y angles of note
 
@@ -161,7 +160,6 @@ def runPipeline(image, llrobot):
 
     print(get_exposure_increase(image, MARKER1_POS, MARKER1_COLOR))
     print(get_exposure_increase(image, MARKER2_POS, MARKER2_COLOR))
-    print(get_exposure_increase(image, MARKER3_POS, MARKER3_COLOR))
     dist = 0
     Angle = 0
     #blur the imagee to smooth it
@@ -223,7 +221,6 @@ def runPipeline(image, llrobot):
 
     cv2.circle(image, MARKER1_POS, 5, MARKER1_COLOR,-1)
     cv2.circle(image, MARKER2_POS, 5, MARKER2_COLOR,-1)
-    cv2.circle(image, MARKER3_POS, 5, MARKER3_COLOR,-1)
 
     cv2.imshow("image",image)
 
