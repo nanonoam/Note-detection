@@ -13,6 +13,7 @@ PREVIOUS = 1
 FIRST_CHILD = 2
 PARENT = 3
 
+expention = 50
 def find_largest_contour_and_child(contours: List[np.ndarray], hierarchy: List[np.ndarray]) -> Tuple[int, int]:
     """Find the largest contour index and his child index
 
@@ -54,20 +55,16 @@ def click_event(event, x, y, flags, params):
         print(x, ' ', y)
         hsv = get_hsv_values(img,x,y)
         global HSV_LOW_BOUND, HSV_HIGH_BOUND
-        HSV_LOW_BOUND = np.array([hsv[0] - 5, hsv[1] - 5, hsv[2] - 5])
-        HSV_HIGH_BOUND = np.array([hsv[0] + 5, hsv[1] + 5, hsv[2] + 5])
+        HSV_LOW_BOUND = np.array([hsv[0] - expention, hsv[1] - expention, hsv[2] - expention])
+        HSV_HIGH_BOUND = np.array([hsv[0] + expention, hsv[1] + expention, hsv[2] + expention])
 
         
         
 
 
-def try_expend(hsv, HSV_LOW_BOUND, HSV_HIGH_BOUND, contours):
-    
 
-
-img = cv2.imread('colorperesite.PNG')
 while (1):
-
+    img = cv2.imread('colorperesite.PNG')
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     # Create a mask based on the specified HSV color range
     mask = cv2.inRange(hsv, HSV_LOW_BOUND, HSV_HIGH_BOUND)
