@@ -40,36 +40,37 @@ def get_hsv_values(img, x, y):
     hsv = hsv[y, x]
     return hsv
 
-def expand_hsv_bounds(img, contour, hsv_low_bound, hsv_high_bound, neighborhood_size=5, tolerance=10):
+def expand_hsv_bounds(img, contour, hsv_low_bound, hsv_high_bound, neighborhood_size=5, tolerance=10, mouse_points=None):
     """
-    Expand the HSV value bounds based on the pixels in the contours and their neighborhood.
+    Expand the HSV value bounds based on the pixels in the contours, their neighborhood, and additional mouse points.
 
     Args:
         img (np.ndarray): The input image.
-        contours (list): A list of contours.
+        contour (np.ndarray): A contour representing the region of interest.
         hsv_low_bound (np.ndarray): The current lower HSV bound.
         hsv_high_bound (np.ndarray): The current upper HSV bound.
         neighborhood_size (int): The size of the neighborhood around each contour pixel.
         tolerance (int): The tolerance value for including neighboring pixels in the bounds.
+        mouse_points (list): A list of (x, y) coordinates from mouse clicks.
 
     Returns:
         tuple: A tuple containing the updated HSV low and high bounds.
     """
     hsv_img = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    new_low_bound = hsv_low_bound.copy()
-    new_high_bound = hsv_high_bound.copy()
-    
-    for point in contour:
-        x, y = point[0]
-        #cv2.circle(img, (x,y), 5, (255,255,255),-1)
-        for nx in range(max(0, x - neighborhood_size // 2), min(img.shape[1], x + neighborhood_size // 2 + 1)):
-            for ny in range(max(0, y - neighborhood_size // 2), min(img.shape[0], y + neighborhood_size // 2 + 1)):
-                pixel_hsv = hsv_img[ny, nx]
-                if np.all(np.abs(pixel_hsv - hsv_low_bound) <= tolerance) and np.all(np.abs(pixel_hsv - hsv_high_bound) <= tolerance):
-                    new_low_bound = np.minimum(new_low_bound, pixel_hsv - tolerance)
-                    new_high_bound = np.maximum(new_high_bound, pixel_hsv + tolerance)
+    updated_low_bound = hsv_low_bound.copy()
+    updated_high_bound = hsv_high_bound.copy()
 
-    return new_low_bound, new_high_bound
+    for pixel in contour:
+        x, y = pixel[0]
+        for neighbor_x in range(max(0, x - neighborhood_size // 2), min(img.shape[1], x + neighborhood_size // 2 + 1)):
+            for neighbor_y in range(max(0, y - neighborhood_size // 2), min(img.shape[0], y + neighborhood_size // 2 + 1)):
+                neighbor_hsv = hsv_img[neighbor_y, neighbor_x]
+                if np.all(np.abs(neighbor_hsv - hsv_low_bound) <= tolerance) and np.all(np.abs(neighbor_hsv - hsv_high_bound) <= tolerance):
+                    updated_low_bound = np.minimum(updated_low_bound, neighbor_hsv - tolerance)
+                    updated_high_bound = np.maximum(updated_high_bound, neighbor_hsv + tolerance)
+
+
+    return updated_low_bound, updated_high_bound
 
 # Click event
 def click_event(event, x, y, flags, params):
