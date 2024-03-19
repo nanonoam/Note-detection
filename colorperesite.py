@@ -65,7 +65,7 @@ def expand_hsv_bounds(img, contour, hsv_low_bound, hsv_high_bound, neighborhood_
         for neighbor_x in range(max(0, x - neighborhood_size // 2), min(img.shape[1], x + neighborhood_size // 2 + 1)):
             for neighbor_y in range(max(0, y - neighborhood_size // 2), min(img.shape[0], y + neighborhood_size // 2 + 1)):
                 neighbor_hsv = hsv_img[neighbor_y, neighbor_x]
-                if np.all(np.abs(neighbor_hsv - hsv_low_bound) <= tolerance) and np.all(np.abs(neighbor_hsv - hsv_high_bound) <= tolerance):
+                if np.all(np.abs(neighbor_hsv - hsv_low_bound) <= tolerance) or np.all(np.abs(neighbor_hsv - hsv_high_bound) <= tolerance):
                     updated_low_bound = np.minimum(updated_low_bound, neighbor_hsv - tolerance)
                     updated_high_bound = np.maximum(updated_high_bound, neighbor_hsv + tolerance)
 
