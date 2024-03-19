@@ -152,7 +152,7 @@ def get_exposure_increase(image, ref_pos, ref_color):
         
     return ms
 
-def expand_hsv_bounds(img, contour, hsv_low_bound, hsv_high_bound, neighborhood_size=5, tolerance=10, mouse_points=None):
+def expand_hsv_bounds(img, contour, hsv_low_bound, hsv_high_bound, neighborhood_size=5, tolerance=5):
     """
     Expand the HSV value bounds based on the pixels in the contours, their neighborhood, and additional mouse points.
 
@@ -177,7 +177,7 @@ def expand_hsv_bounds(img, contour, hsv_low_bound, hsv_high_bound, neighborhood_
         for neighbor_x in range(max(0, x - neighborhood_size // 2), min(img.shape[1], x + neighborhood_size // 2 + 1)):
             for neighbor_y in range(max(0, y - neighborhood_size // 2), min(img.shape[0], y + neighborhood_size // 2 + 1)):
                 neighbor_hsv = hsv_img[neighbor_y, neighbor_x]
-                if np.all(np.abs(neighbor_hsv - hsv_low_bound) <= tolerance) and np.all(np.abs(neighbor_hsv - hsv_high_bound) <= tolerance):
+                if np.all(np.abs(neighbor_hsv - hsv_low_bound) <= tolerance) or np.all(np.abs(neighbor_hsv - hsv_high_bound) <= tolerance):
                     updated_low_bound = np.minimum(updated_low_bound, neighbor_hsv - tolerance)
                     updated_high_bound = np.maximum(updated_high_bound, neighbor_hsv + tolerance)
 
@@ -187,6 +187,7 @@ def expand_hsv_bounds(img, contour, hsv_low_bound, hsv_high_bound, neighborhood_
 
 # runPipeline() is called every frame by Limelight's backend.
 def runPipeline(image, llrobot):
+    global HSV_LOW_BOUND, HSV_HIGH_BOUND
 
 
     exposure_increase = (get_exposure_increase(image, MARKER1_POS, MARKER1_COLOR) + get_exposure_increase(image, MARKER2_POS, MARKER2_COLOR))/2
@@ -210,9 +211,10 @@ def runPipeline(image, llrobot):
     # Process only if there are contours detected
     if len(contours) != 0:
         hierarchy = hierarchy[0]
-        # Find the largest contour and child contour within the largest contour
-        largest_contour_index, biggest_child_contour_index = find_largest_contour_and_child(contours, hierarchy) 
+        largest_contour_index, biggest_child_contour_index = find_largest_contour_and_child(contours, hierarchy)
         HSV_LOW_BOUND, HSV_HIGH_BOUND = expand_hsv_bounds(img, contours[largest_contour_index], HSV_LOW_BOUND, HSV_HIGH_BOUND)
+        print(HSV_LOW_BOUND)
+        print(HSV_HIGH_BOUND)
         cv2.drawContours(image, contours, largest_contour_index, (255, 0, 0), 5)
         # Draw the largest child contour
         if biggest_child_contour_index != -1:
@@ -257,7 +259,6 @@ def runPipeline(image, llrobot):
 
     cv2.imshow("image",image)
 
-    print(llpython)
 
     return contours, image, llpython
 
