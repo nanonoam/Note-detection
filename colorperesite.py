@@ -10,7 +10,6 @@ NEXT = 0
 PREVIOUS = 1
 FIRST_CHILD = 2
 PARENT = 3
-expention = 5
 
 def find_largest_contour_and_child(contours: List[np.ndarray], hierarchy: List[np.ndarray]) -> Tuple[int, int]:
     """Find the largest contour index and his child index
@@ -79,8 +78,8 @@ def click_event(event, x, y, flags, params):
         print(x, ' ', y)
         hsv = get_hsv_values(img, x, y)
         global HSV_LOW_BOUND, HSV_HIGH_BOUND
-        HSV_LOW_BOUND = np.array([hsv[0] - expention, hsv[1] - expention, hsv[2] - expention])
-        HSV_HIGH_BOUND = np.array([hsv[0] + expention, hsv[1] + expention, hsv[2] + expention])
+        HSV_LOW_BOUND = np.array([hsv[0], hsv[1], hsv[2]])
+        HSV_HIGH_BOUND = np.array([hsv[0], hsv[1], hsv[2]])
 
 while (1):
     img = cv2.imread('colorperesite.PNG')
@@ -97,8 +96,9 @@ while (1):
     if len(contours) != 0:
         hierarchy = hierarchy[0]
         # Find the largest contour and child contour within the largest contour
-        largest_contour_index, biggest_child_contour_index = find_largest_contour_and_child(contours, hierarchy) 
+        largest_contour_index, biggest_child_contour_index = find_largest_contour_and_child(contours, hierarchy)
         HSV_LOW_BOUND, HSV_HIGH_BOUND = expand_hsv_bounds(img, contours[largest_contour_index], HSV_LOW_BOUND, HSV_HIGH_BOUND)
+        HSV_LOW_BOUND, HSV_HIGH_BOUND = expand_hsv_bounds(img, contours[biggest_child_contour_index], HSV_LOW_BOUND, HSV_HIGH_BOUND)
         #cv2.drawContours(image, contours, largest_contour_index, (255, 0, 0), 5)
         # Draw the largest child contour
         if biggest_child_contour_index != -1:
