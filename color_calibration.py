@@ -45,7 +45,7 @@ while True:
         break
 
     # Convert source image to HLS color mode
-    hls = cv2.cvtColor(img, cv2.COLOR_BGR2HLS)
+    hls = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
     hls_low = np.array([H_low, L_low, S_low], np.uint8)
     hls_high = np.array([H_high, L_high, S_high], np.uint8)

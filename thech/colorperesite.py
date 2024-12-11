@@ -53,6 +53,7 @@ def click_event(event, x, y, flags, params):
         global HSV_LOW_BOUND, HSV_HIGH_BOUND
         HSV_LOW_BOUND = np.array([hsv[0], hsv[1], hsv[2]])
         HSV_HIGH_BOUND = np.array([hsv[0], hsv[1], hsv[2]])
+        
 
 while (1):
     img = cv2.imread('colorperesite.PNG')
